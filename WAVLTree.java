@@ -10,23 +10,10 @@ public class WAVLTree {
 	// there is one virtual Node in all the tree - all linked to him
 	private final WAVLNode virtualNode = new WAVLNode(-1, null, false, -1);
 	private WAVLNode root;
-	private int size;
 
 	public WAVLTree() {
 		this.root = this.virtualNode;
-		this.size = 0;
 	}
-
-	// /ONLY FOR TESTER DELETE AFTER
-	public void init() {
-		this.insert(5, "a");
-		this.insert(0, "smaller");
-		this.insert(20, "max");
-		this.insert(16, "lets see");
-		this.insert(8, "hi");
-	}
-
-	// /DELETE IT AFTER!!!
 
 	/**
 	 * public boolean empty()
@@ -35,7 +22,7 @@ public class WAVLTree {
 	 * 
 	 */
 	public boolean empty() {
-		return this.root == this.virtualNode;
+		return !this.root.isReal;
 	}
 
 	/**
@@ -46,7 +33,7 @@ public class WAVLTree {
 	 */
 	public String search(int k) {
 		WAVLNode temp = this.root;
-		while (temp != this.virtualNode) {
+		while (temp.isReal) {
 			if (temp.key == k) {
 				return temp.value;
 			}
@@ -77,15 +64,13 @@ public class WAVLTree {
 		// empty tree
 		if (this.empty()) {
 			this.root = temp;
-			this.size++;
 			return 0;
 		}
 		WAVLNode newParent = findInsertParent(k);
 		// if already exist
-		if (newParent == this.virtualNode) {
+		if (!newParent.isReal) {
 			return -1;
 		}
-		this.size++;
 		temp.parent = newParent;
 
 		// case 1 parent is leaf
@@ -102,24 +87,23 @@ public class WAVLTree {
 				c = c.parent;
 			}
 			// do balance if need
-			balancing += balance(newParent, 0);
+			balancing = balanceInsert(newParent, 0);
 
 		} else {
 			// case 2 parent is unary no need to balance
-			if (newParent.left == this.virtualNode) {
+			if (!newParent.left.isReal) {
 				newParent.left = temp;
 			} else {
 				newParent.right = temp;
 			}
-			// no need to balance
+			// update size
 			while (newParent != null) {
 				newParent.subTreeSize++;
 				newParent = newParent.parent;
 			}
 		}
-		
 
-		return balancing; 
+		return balancing;
 	}
 
 	/*
@@ -127,10 +111,10 @@ public class WAVLTree {
 	 */
 	private void rotate(WAVLNode x, WAVLNode y) {
 		WAVLNode c;
-		if(y.parent.right==y){
-			y.parent.right=x;
-		}else{
-			y.parent.left=x;
+		if (y.parent.right == y) {
+			y.parent.right = x;
+		} else {
+			y.parent.left = x;
 		}
 		x.parent = y.parent;
 		y.parent = x;
@@ -148,7 +132,7 @@ public class WAVLTree {
 
 	}
 
-	private int balance(WAVLNode newParent, int balancing) {
+	private int balanceInsert(WAVLNode newParent, int balancing) {
 		if (newParent != null) {
 			// we didnt promoted root
 
@@ -156,7 +140,7 @@ public class WAVLTree {
 				if (newParent.rank - newParent.right.rank == 1) {
 					// newParent is 0/1 need promote
 					newParent.rank++;
-					balance(newParent.parent, balancing + 1);
+					balancing += balanceInsert(newParent.parent, balancing + 1);
 				} else {
 					// newParent is 0/2 node
 					if (newParent.left.rank - newParent.left.right.rank == 2) {
@@ -181,7 +165,8 @@ public class WAVLTree {
 					if (newParent.rank - newParent.left.rank == 1) {
 						// new parent is 1/0 need promote
 						newParent.rank++;
-						balance(newParent.parent, balancing + 1);
+						balancing += balanceInsert(newParent.parent,
+								balancing + 1);
 					} else {
 						// new parent is 2/0 node
 						if (newParent.right.rank - newParent.right.left.rank == 2) {
@@ -210,14 +195,14 @@ public class WAVLTree {
 	}
 
 	private boolean isLeaf(WAVLNode temp) {
-		if (temp.right == this.virtualNode && temp.right == temp.left) {
+		if (!temp.right.isReal && !temp.left.isReal) {
 			return true;
 		}
 		return false;
 	}
 
 	// @pre !this.empty()
-	// @post return new parent of k and virtaul node if k already exist
+	// @post return new parent of k and virtual node if k already exist
 	private WAVLNode findInsertParent(int k) {
 		WAVLNode temp = this.root;
 		WAVLNode child;
@@ -229,7 +214,7 @@ public class WAVLTree {
 		} else {
 			child = temp.left;
 		}
-		while (child != this.virtualNode) {
+		while (child.isReal) {
 			temp = child;
 			if (k == child.key) {
 				return this.virtualNode;
@@ -253,7 +238,234 @@ public class WAVLTree {
 	 * returns -1 if an item with key k was not found in the tree.
 	 */
 	public int delete(int k) {
-		return 42; // to be replaced by student code
+		int balancing = 0;
+		WAVLNode deleteNode = findDeleteNode(k);
+		if (!deleteNode.isReal) {
+			return -1;
+		}
+		balancing = deleteThisNode(deleteNode);
+		return balancing;
+	}
+
+	private int deleteThisNode(WAVLNode deleteNode) {
+		WAVLNode successor, temp;
+		int balancing = 0;
+		if (deleteNode.right.isReal && deleteNode.left.isReal) {
+			// inner node
+			// replace with succsessor
+			successor = findSuccessor(deleteNode);
+			balancing = deleteThisNode(successor);
+			successor.rank = deleteNode.rank;
+			successor.right = deleteNode.right;
+			successor.left = deleteNode.left;
+			successor.parent = deleteNode.parent;
+			successor.subTreeSize = deleteNode.subTreeSize;
+			deleteNode.right.parent = successor;
+			deleteNode.left.parent = successor;
+			if (this.root == deleteNode) {
+				this.root = successor;
+			}
+
+		} else {
+			// leaf or unary
+
+			if (!deleteNode.right.isReal && !deleteNode.left.isReal) {
+				// leaf
+				if (this.root == deleteNode) {
+					this.root = this.virtualNode;
+				} else {
+					if (deleteNode.parent.right == deleteNode) {
+						// right leaf
+						deleteNode.parent.right = this.virtualNode;
+					} else {
+						// left leaf
+						deleteNode.parent.left = this.virtualNode;
+					}
+				}
+			} else {
+				// unary
+				WAVLNode child = null;
+				if (this.root == deleteNode) {
+					// delete the root
+					if (deleteNode.right.isReal) {
+						child = deleteNode.right;
+					} else {
+						child = deleteNode.left;
+					}
+
+					this.root = child;
+				}
+
+				else {
+					// not root connect child to parent and balance parent
+
+					if (deleteNode.parent.right == deleteNode) {
+						// deletedNode > deletedNode.parent
+
+						if (deleteNode.right.isReal) {
+							// right child unary
+							deleteNode.parent.right = deleteNode.right;
+							child = deleteNode.right;
+
+						} else {
+							// left child unary
+							deleteNode.parent.right = deleteNode.left;
+							child = deleteNode.left;
+						}
+
+					} else {
+						// deletedNode < deletedNode.parent
+						if (deleteNode.right.isReal) {
+							// right child unary
+							deleteNode.parent.left = deleteNode.right;
+							child = deleteNode.right;
+
+						} else {
+							// left child unary
+							deleteNode.parent.left = deleteNode.left;
+							child = deleteNode.left;
+						}
+
+					}
+
+				}
+				child.parent = deleteNode.parent;
+			}
+			temp = deleteNode;
+			while (temp != null) {
+				temp.subTreeSize--;
+				temp = temp.parent;
+			}
+			balancing += balanceDelete(deleteNode.parent, balancing);
+		}
+
+		return balancing;
+
+	}
+
+	private int balanceDelete(WAVLNode node, int balancing) {
+		if (node == null) {
+			// we promoted root
+			return balancing;
+		}
+		if (isLeaf(node)) {
+			if (node.rank == 1) {
+				// 2,2 leaf need demote
+				node.rank--;
+				balancing += balanceDelete(node.parent, balancing + 1);
+			}
+		} else {
+			if (node.rank - node.left.rank == 3) {
+				if (node.rank - node.right.rank == 2) {
+					// 3,2 node need demote
+					node.rank--;
+					balancing += balanceDelete(node.parent, balancing + 1);
+				} else {
+					// 3,1 node
+					if (node.right.rank - node.right.right.rank == 2
+							&& node.right.rank - node.right.left.rank == 2) {
+						// case 2 presentation double demote
+						node.rank--;
+						node.right.rank--;
+						balancing += balanceDelete(node.parent, balancing + 2);
+
+					} else {
+						if (node.right.rank - node.right.right.rank == 1) {
+							// case 3 rotate
+							rotate(node.right, node);
+							node.rank--;
+							node.right.rank++;
+							balancing += 3;
+							if (isLeaf(node)
+									&& node.rank - node.right.rank == 2) {
+								// 2,2 leaf after roteation
+								node.rank--;
+								balancing += 1;
+
+							}
+
+						} else {
+							// case 4 double rotate
+							rotate(node.right.left, node.right);
+							rotate(node.right.left, node);
+							node.rank -= 2;
+							node.right.rank--;
+							node.right.left.rank += 2;
+							balancing += 7;
+
+						}
+					}
+				}
+			}
+
+		}
+		if (node.rank - node.right.rank == 3) {
+			if (node.rank - node.left.rank == 2) {
+				// 2,3 node demote
+				node.rank--;
+				balancing += balanceDelete(node.parent, balancing + 1);
+			} else {
+				// 1,3 node
+				if (node.left.rank - node.left.right.rank == 2
+						&& node.left.rank - node.left.left.rank == 2) {
+					// case 2 presentation double demote
+					node.rank--;
+					node.left.rank--;
+					balancing += balanceDelete(node.parent, balancing + 2);
+				} else {
+					if (node.left.rank - node.left.left.rank == 1) {
+						// case 3 rotate
+						rotate(node.left, node);
+						node.rank--;
+						node.left.rank++;
+						balancing += 3;
+						if (isLeaf(node) && node.rank - node.left.rank == 2) {
+							// 2,2 leaf after roteation
+							node.rank--;
+							balancing += 1;
+
+						}
+					} else {
+						// case 4 double rotate
+						rotate(node.left.right, node.left);
+						rotate(node.left.right, node);
+						node.rank -= 2;
+						node.left.rank--;
+						node.left.right.rank += 2;
+						balancing += 7;
+
+					}
+				}
+			}
+		}
+		return balancing;
+	}
+
+	// return node to delete if not found return this virtual node
+	private WAVLNode findDeleteNode(int k) {
+		WAVLNode temp = this.root;
+		while (temp.isReal) {
+			if (k == temp.key) {
+				return temp;
+			}
+			if (k > temp.key) {
+				temp = temp.right;
+			} else {
+				temp = temp.left;
+			}
+		}
+		return temp;
+	}
+
+	// @pre temp.right.isReal
+	// @post return succssesor
+	private WAVLNode findSuccessor(WAVLNode temp) {
+		temp = temp.right;
+		while (temp.left.isReal) {
+			temp = temp.left;
+		}
+		return temp;
+
 	}
 
 	/**
@@ -269,7 +481,7 @@ public class WAVLTree {
 
 		}
 		WAVLNode temp = this.root;
-		while (temp.left != this.virtualNode) {
+		while (temp.left.isReal) {
 			temp = temp.left;
 		}
 		return temp.value;
@@ -288,7 +500,7 @@ public class WAVLTree {
 
 		}
 		WAVLNode temp = this.root;
-		while (temp.right != this.virtualNode) {
+		while (temp.right.isReal) {
 			temp = temp.right;
 		}
 		return temp.value;
@@ -301,14 +513,14 @@ public class WAVLTree {
 	 * array if the tree is empty.
 	 */
 	public int[] keysToArray() {
-		int[] arr = new int[this.size];
+		int[] arr = new int[this.root.subTreeSize];
 		if (this.empty()) {
 			return arr;
 		}
 		// using an array instead of int so it will change deep in the recursion
 		int[] index = { 0 };
-		WAVLNode[] arrayNodes = inOrderWalk(new WAVLNode[this.size], index,
-				this.root);
+		WAVLNode[] arrayNodes = inOrderWalk(
+				new WAVLNode[this.root.subTreeSize], index, this.root);
 		for (int i = 0; i < arrayNodes.length; i++) {
 			arr[i] = arrayNodes[i].key;
 		}
@@ -319,12 +531,12 @@ public class WAVLTree {
 	// @preCondition temp!=this.virtualNode
 	private WAVLNode[] inOrderWalk(WAVLNode[] array, int[] index, WAVLNode temp) {
 		// scan the tree in order and return an array of all the nodes
-		if (temp.left != this.virtualNode) {
+		if (temp.left.isReal) {
 			this.inOrderWalk(array, index, temp.left);
 		}
 		array[index[0]] = temp;
 		index[0]++;
-		if (temp.right != this.virtualNode) {
+		if (temp.right.isReal) {
 			this.inOrderWalk(array, index, temp.right);
 		}
 		return array;
@@ -338,13 +550,13 @@ public class WAVLTree {
 	 * respective keys, or an empty array if the tree is empty.
 	 */
 	public String[] infoToArray() {
-		String[] arr = new String[this.size];
+		String[] arr = new String[this.root.subTreeSize];
 		if (this.empty()) {
 			return arr;
 		}
 		int[] index = { 0 };
-		WAVLNode[] arrayNodes = inOrderWalk(new WAVLNode[this.size], index,
-				this.root);
+		WAVLNode[] arrayNodes = inOrderWalk(
+				new WAVLNode[this.root.subTreeSize], index, this.root);
 		for (int i = 0; i < arrayNodes.length; i++) {
 			arr[i] = arrayNodes[i].value;
 		}
@@ -359,7 +571,7 @@ public class WAVLTree {
 	 * precondition: none postcondition: none
 	 */
 	public int size() {
-		return this.size;
+		return this.root.subTreeSize;
 	}
 
 	/**
@@ -438,7 +650,6 @@ public class WAVLTree {
 			this.value = val;
 			this.isReal = true;
 			this.rank = 0;
-			// set parent?
 			this.parent = null;
 
 		}
@@ -450,6 +661,7 @@ public class WAVLTree {
 			this.isReal = isReal;
 			this.rank = -1;
 			this.parent = null;
+			this.subTreeSize = 0;
 
 		}
 
