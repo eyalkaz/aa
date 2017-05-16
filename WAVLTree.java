@@ -147,7 +147,7 @@ public class WAVLTree {
 						// case 2 in presentation need single rotation
 						rotate(newParent.left, newParent);
 						newParent.rank--;
-						balancing += 2;
+						balancing += 1;
 					} else {
 						// case 3 presentation double rotation
 						rotate(newParent.left.right, newParent.left);
@@ -155,7 +155,7 @@ public class WAVLTree {
 						newParent.left.right.rank++;
 						newParent.left.rank--;
 						newParent.rank--;
-						balancing += 5;
+						balancing += 2;
 
 					}
 
@@ -173,7 +173,7 @@ public class WAVLTree {
 							// one roteation
 							rotate(newParent.right, newParent);
 							newParent.rank--;
-							balancing += 2;
+							balancing += 1;
 
 						} else {
 							// double rotate
@@ -182,7 +182,7 @@ public class WAVLTree {
 							newParent.right.left.rank++;
 							newParent.right.rank--;
 							newParent.rank--;
-							balancing += 5;
+							balancing += 2;
 						}
 
 					}
@@ -375,7 +375,7 @@ public class WAVLTree {
 							rotate(node.right, node);
 							node.rank--;
 							node.right.rank++;
-							balancing += 3;
+							balancing += 1;
 							if (isLeaf(node)
 									&& node.rank - node.right.rank == 2) {
 								// 2,2 leaf after roteation
@@ -391,7 +391,7 @@ public class WAVLTree {
 							node.rank -= 2;
 							node.right.rank--;
 							node.right.left.rank += 2;
-							balancing += 7;
+							balancing += 2;
 
 						}
 					}
@@ -418,7 +418,7 @@ public class WAVLTree {
 						rotate(node.left, node);
 						node.rank--;
 						node.left.rank++;
-						balancing += 3;
+						balancing += 1;
 						if (isLeaf(node) && node.rank - node.left.rank == 2) {
 							// 2,2 leaf after roteation
 							node.rank--;
@@ -432,7 +432,7 @@ public class WAVLTree {
 						node.rank -= 2;
 						node.left.rank--;
 						node.left.right.rank += 2;
-						balancing += 7;
+						balancing += 2;
 
 					}
 				}
