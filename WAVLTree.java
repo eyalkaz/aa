@@ -1,3 +1,5 @@
+
+
 /**
  * 
  * WAVLTree
@@ -111,20 +113,32 @@ public class WAVLTree {
 	 */
 	private void rotate(WAVLNode x, WAVLNode y) {
 		WAVLNode c;
-		if (y.parent.right == y) {
-			y.parent.right = x;
+		if (this.root == y) {
+			this.root = x;
 		} else {
-			y.parent.left = x;
+
+			if (y.parent.right == y) {
+				y.parent.right = x;
+			} else {
+				y.parent.left = x;
+			}
 		}
 		x.parent = y.parent;
 		y.parent = x;
+
 		if (x == y.left) {
 			c = x.left;
 			y.left = x.right;
+			if (x.right.isReal) {
+				x.right.parent = y;
+			}
 			x.right = y;
 		} else {
 			c = x.right;
 			y.right = x.left;
+			if (x.left.isReal) {
+				x.left.parent = y;
+			}
 			x.left = y;
 		}
 		y.subTreeSize = y.right.subTreeSize + y.left.subTreeSize + 1;
@@ -150,10 +164,10 @@ public class WAVLTree {
 						balancing += 1;
 					} else {
 						// case 3 presentation double rotation
-						rotate(newParent.left.right, newParent.left);
-						rotate(newParent.left.right, newParent);
 						newParent.left.right.rank++;
 						newParent.left.rank--;
+						rotate(newParent.left.right, newParent.left);
+						rotate(newParent.left, newParent);
 						newParent.rank--;
 						balancing += 2;
 
@@ -177,10 +191,10 @@ public class WAVLTree {
 
 						} else {
 							// double rotate
-							rotate(newParent.right.left, newParent.right);
-							rotate(newParent.right.left, newParent);
 							newParent.right.left.rank++;
 							newParent.right.rank--;
+							rotate(newParent.right.left, newParent.right);
+							rotate(newParent.right, newParent);
 							newParent.rank--;
 							balancing += 2;
 						}
@@ -250,21 +264,14 @@ public class WAVLTree {
 	private int deleteThisNode(WAVLNode deleteNode) {
 		WAVLNode successor, temp;
 		int balancing = 0;
+
 		if (deleteNode.right.isReal && deleteNode.left.isReal) {
 			// inner node
-			// replace with succsessor
+			// replace with succsessor and delete succsessor
 			successor = findSuccessor(deleteNode);
-			balancing = deleteThisNode(successor);
-			successor.rank = deleteNode.rank;
-			successor.right = deleteNode.right;
-			successor.left = deleteNode.left;
-			successor.parent = deleteNode.parent;
-			successor.subTreeSize = deleteNode.subTreeSize;
-			deleteNode.right.parent = successor;
-			deleteNode.left.parent = successor;
-			if (this.root == deleteNode) {
-				this.root = successor;
-			}
+			deleteNode.key = successor.key;
+			deleteNode.value = successor.value;
+			balancing += deleteThisNode(successor);
 
 		} else {
 			// leaf or unary
@@ -372,9 +379,9 @@ public class WAVLTree {
 					} else {
 						if (node.right.rank - node.right.right.rank == 1) {
 							// case 3 rotate
+							node.right.rank++;
 							rotate(node.right, node);
 							node.rank--;
-							node.right.rank++;
 							balancing += 1;
 							if (isLeaf(node)
 									&& node.rank - node.right.rank == 2) {
@@ -386,11 +393,11 @@ public class WAVLTree {
 
 						} else {
 							// case 4 double rotate
-							rotate(node.right.left, node.right);
-							rotate(node.right.left, node);
-							node.rank -= 2;
 							node.right.rank--;
 							node.right.left.rank += 2;
+							rotate(node.right.left, node.right);
+							rotate(node.right, node);
+							node.rank -= 2;
 							balancing += 2;
 
 						}
@@ -415,9 +422,10 @@ public class WAVLTree {
 				} else {
 					if (node.left.rank - node.left.left.rank == 1) {
 						// case 3 rotate
+						node.left.rank++;
 						rotate(node.left, node);
 						node.rank--;
-						node.left.rank++;
+
 						balancing += 1;
 						if (isLeaf(node) && node.rank - node.left.rank == 2) {
 							// 2,2 leaf after roteation
@@ -427,11 +435,12 @@ public class WAVLTree {
 						}
 					} else {
 						// case 4 double rotate
-						rotate(node.left.right, node.left);
-						rotate(node.left.right, node);
-						node.rank -= 2;
 						node.left.rank--;
 						node.left.right.rank += 2;
+						rotate(node.left.right, node.left);
+						rotate(node.left, node);
+						node.rank -= 2;
+
 						balancing += 2;
 
 					}
@@ -626,6 +635,7 @@ public class WAVLTree {
 		public int getSubtreeSize(); // Returns the number of real nodes in this
 										// node's subtree (Should be implemented
 										// in O(1))
+
 	}
 
 	/**
@@ -690,6 +700,7 @@ public class WAVLTree {
 		public int getSubtreeSize() {
 			return this.subTreeSize;
 		}
+	
 
 	}
 
