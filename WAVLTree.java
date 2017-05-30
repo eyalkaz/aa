@@ -4,6 +4,9 @@
  * <p>
  * An implementation of a WAVL Tree with distinct integer keys and info
  */
+//students and id:
+//eyalkazula-209133693
+//yuvalyehudab-203769609
 
 public class WAVLTree {
     // there is one virtual Node in all the tree - all linked to him
@@ -11,6 +14,7 @@ public class WAVLTree {
     private WAVLNode root;
 
     public WAVLTree() {
+        //empty tree
         this.root = this.virtualNode;
     }
 
@@ -20,6 +24,8 @@ public class WAVLTree {
      * returns true if and only if the tree is empty
      */
     public boolean empty() {
+        //O(1)
+        //if the root is virtaul its means the tree is empty
         return !this.root.isReal;
     }
 
@@ -30,6 +36,8 @@ public class WAVLTree {
      * otherwise, returns null
      */
     public String search(int k) {
+        //O(logn)
+        //simple bst search
         WAVLNode temp = this.root;
         while (temp.isReal) {
             if (temp.key == k) {
@@ -54,6 +62,7 @@ public class WAVLTree {
      * if an item with key k already exists in the tree.
      */
     public int insert(int k, String i) {
+        // O(logn)
         int balancing = 0;
         WAVLNode c;
         WAVLNode temp = new WAVLNode(k, i);// rank temp=0
@@ -105,9 +114,10 @@ public class WAVLTree {
     }
 
     /*
-     * @pre x==y.left||x=y.right
+     * @pre x==y.left||x==y.right
      */
     private void rotate(WAVLNode x, WAVLNode y) {
+        //O(1)
         WAVLNode c;
         if (this.root == y) {
             this.root = x;
@@ -143,6 +153,7 @@ public class WAVLTree {
     }
 
     private int balanceInsert(WAVLNode newParent, int balancing) {
+        //w.c O(logn)
         if (newParent != null) {
             // we didnt promoted root
 
@@ -205,6 +216,8 @@ public class WAVLTree {
     }
 
     private boolean isLeaf(WAVLNode temp) {
+        //O(1)
+        //check if temp is leaf
         if (!temp.right.isReal && !temp.left.isReal) {
             return true;
         }
@@ -214,6 +227,7 @@ public class WAVLTree {
     // @pre !this.empty()
     // @post return new parent of k and virtual node if k already exist
     private WAVLNode findInsertParent(int k) {
+        //O(logn)
         WAVLNode temp = this.root;
         WAVLNode child;
         if (k == temp.key) {
@@ -248,6 +262,7 @@ public class WAVLTree {
      * returns -1 if an item with key k was not found in the tree.
      */
     public int delete(int k) {
+        //O(logn)
         int balancing = 0;
         WAVLNode deleteNode = findDeleteNode(k);
         if (!deleteNode.isReal) {
@@ -266,9 +281,6 @@ public class WAVLTree {
             // replace with succsessor and delete succsessor
 
             successor = findSuccessor(deleteNode);
-
-            // deleteNode.key = successor.key;
-            // deleteNode.value = successor.value;
             balancing += deleteThisNode(successor);
             successor.rank = deleteNode.rank;
             successor.right = deleteNode.right;
@@ -291,7 +303,7 @@ public class WAVLTree {
         } else {
             // leaf or unary
 
-            if (!deleteNode.right.isReal && !deleteNode.left.isReal) {
+            if (isLeaf(deleteNode)) {
                 // leaf
                 if (this.root == deleteNode) {
                     this.root = this.virtualNode;
@@ -364,6 +376,7 @@ public class WAVLTree {
     }
 
     private int balanceDelete(WAVLNode node, int balancing) {
+        //w.c O(logn)
         if (node == null) {
             // we promoted root
             return balancing;
@@ -465,6 +478,7 @@ public class WAVLTree {
 
     // return node to delete if not found return this virtual node
     private WAVLNode findDeleteNode(int k) {
+        //o(logn)
         WAVLNode temp = this.root;
         while (temp.isReal) {
             if (k == temp.key) {
@@ -482,6 +496,7 @@ public class WAVLTree {
     // @pre temp.right.isReal
     // @post return succssesor
     private WAVLNode findSuccessor(WAVLNode temp) {
+        //O(logn)
         temp = temp.right;
         while (temp.left.isReal) {
             temp = temp.left;
@@ -497,6 +512,7 @@ public class WAVLTree {
      * if the tree is empty
      */
     public String min() {
+        //O(logn)
         // go till the end on the left branch
         if (this.empty()) {
             return null;
@@ -516,6 +532,7 @@ public class WAVLTree {
      * the tree is empty
      */
     public String max() {
+        //O(logn)
         // go on the right branch
         if (this.empty()) {
             return null;
@@ -535,6 +552,7 @@ public class WAVLTree {
      * array if the tree is empty.
      */
     public int[] keysToArray() {
+        //O(n)
         int[] arr = new int[this.root.subTreeSize];
         if (this.empty()) {
             return arr;
@@ -552,6 +570,7 @@ public class WAVLTree {
 
     // @preCondition temp!=this.virtualNode
     private WAVLNode[] inOrderWalk(WAVLNode[] array, int[] index, WAVLNode temp) {
+        //O(n)
         // scan the tree in order and return an array of all the nodes
         if (temp.left.isReal) {
             this.inOrderWalk(array, index, temp.left);
@@ -572,6 +591,7 @@ public class WAVLTree {
      * respective keys, or an empty array if the tree is empty.
      */
     public String[] infoToArray() {
+        //O(n)
         String[] arr = new String[this.root.subTreeSize];
         if (this.empty()) {
             return arr;
@@ -622,7 +642,21 @@ public class WAVLTree {
      * precondition: size() >= i > 0 postcondition: none
      */
     public String select(int i) {
+        WAVLNode tmpRoot = this.root;
+        while (tmpRoot.isReal) {
+            int numOfElementsBefore = tmpRoot.getLeft().getSubtreeSize() + 1;
+            if (numOfElementsBefore == i) { //we need this element
+                return tmpRoot.getValue();
+            } else if (numOfElementsBefore > i) { //its in the left
+                tmpRoot = tmpRoot.left;
+            } else if (numOfElementsBefore < i) {
+                i = i - numOfElementsBefore;
+                tmpRoot = tmpRoot.right;
+            }
+        }
         return null;
+
+
     }
 
     /**
@@ -714,8 +748,6 @@ public class WAVLTree {
         public int getSubtreeSize() {
             return this.subTreeSize;
         }
-
-
 
 
     }
