@@ -5,17 +5,19 @@
  * An implementation of a WAVL Tree with distinct integer keys and info
  */
 //students and id:
-//eyalkazula-209133693
-//yuvalyehudab-203769609
+//username: eyalkazula ID:209133693 name: Eyal Kazula
+//username: yuvalyehudab ID:203769609 name: Yuval_barak
 
 public class WAVLTree {
     // there is one virtual Node in all the tree - all linked to him
     private final WAVLNode virtualNode = new WAVLNode(-1, null, false, -1);
     private WAVLNode root;
+    private WAVLNode minimum;
 
     public WAVLTree() {
         //empty tree
         this.root = this.virtualNode;
+        minimum=this.virtualNode;
     }
 
     /**
@@ -71,6 +73,7 @@ public class WAVLTree {
         // empty tree
         if (this.empty()) {
             this.root = temp;
+            this.minimum=temp;
             return 0;
         }
         WAVLNode newParent = findInsertParent(k);
@@ -79,6 +82,9 @@ public class WAVLTree {
             return -1;
         }
         temp.parent = newParent;
+        if(temp.key<this.minimum.getKey()){
+            this.minimum=temp;
+        }
 
         // case 1 parent is leaf
 
@@ -161,7 +167,7 @@ public class WAVLTree {
                 if (newParent.rank - newParent.right.rank == 1) {
                     // newParent is 0/1 need promote
                     newParent.rank++;
-                    balancing += balanceInsert(newParent.parent, balancing + 1);
+                    balancing = balanceInsert(newParent.parent, balancing)+1;
                 } else {
                     // newParent is 0/2 node
                     if (newParent.left.rank - newParent.left.right.rank == 2) {
@@ -186,8 +192,8 @@ public class WAVLTree {
                     if (newParent.rank - newParent.left.rank == 1) {
                         // new parent is 1/0 need promote
                         newParent.rank++;
-                        balancing += balanceInsert(newParent.parent,
-                                balancing + 1);
+                        balancing = balanceInsert(newParent.parent,
+                                balancing )+1;
                     } else {
                         // new parent is 2/0 node
                         if (newParent.right.rank - newParent.right.left.rank == 2) {
@@ -267,6 +273,12 @@ public class WAVLTree {
         WAVLNode deleteNode = findDeleteNode(k);
         if (!deleteNode.isReal) {
             return -1;
+        }
+        if(this.minimum==deleteNode){
+                this.minimum = this.findSuccessor(deleteNode);
+            if(this.minimum==deleteNode){
+                this.minimum=this.virtualNode;
+            }
         }
         balancing = deleteThisNode(deleteNode);
         return balancing;
@@ -368,7 +380,7 @@ public class WAVLTree {
                 temp.subTreeSize--;
                 temp = temp.parent;
             }
-            balancing += balanceDelete(deleteNode.parent, balancing);
+            balancing = balanceDelete(deleteNode.parent, balancing);
         }
 
         return balancing;
@@ -385,14 +397,14 @@ public class WAVLTree {
             if (node.rank == 1) {
                 // 2,2 leaf need demote
                 node.rank--;
-                balancing += balanceDelete(node.parent, balancing + 1);
+                balancing = balanceDelete(node.parent, balancing )+1;
             }
         } else {
             if (node.rank - node.left.rank == 3) {
                 if (node.rank - node.right.rank == 2) {
                     // 3,2 node need demote
                     node.rank--;
-                    balancing += balanceDelete(node.parent, balancing + 1);
+                    balancing = balanceDelete(node.parent, balancing )+1;
                 } else {
                     // 3,1 node
                     if (node.right.rank - node.right.right.rank == 2
@@ -400,7 +412,7 @@ public class WAVLTree {
                         // case 2 presentation double demote
                         node.rank--;
                         node.right.rank--;
-                        balancing += balanceDelete(node.parent, balancing + 2);
+                        balancing = balanceDelete(node.parent, balancing )+2;
 
                     } else {
                         if (node.right.rank - node.right.right.rank == 1) {
@@ -436,7 +448,7 @@ public class WAVLTree {
             if (node.rank - node.left.rank == 2) {
                 // 2,3 node demote
                 node.rank--;
-                balancing += balanceDelete(node.parent, balancing + 1);
+                balancing = balanceDelete(node.parent, balancing )+1;
             } else {
                 // 1,3 node
                 if (node.left.rank - node.left.right.rank == 2
@@ -444,7 +456,7 @@ public class WAVLTree {
                     // case 2 presentation double demote
                     node.rank--;
                     node.left.rank--;
-                    balancing += balanceDelete(node.parent, balancing + 2);
+                    balancing = balanceDelete(node.parent, balancing )+2;
                 } else {
                     if (node.left.rank - node.left.left.rank == 1) {
                         // case 3 rotate
@@ -493,13 +505,27 @@ public class WAVLTree {
         return temp;
     }
 
-    // @pre temp.right.isReal
+
     // @post return succssesor
     private WAVLNode findSuccessor(WAVLNode temp) {
         //O(logn)
-        temp = temp.right;
-        while (temp.left.isReal) {
-            temp = temp.left;
+        if(temp.right.isReal) {
+            temp = temp.right;
+            while (temp.left.isReal) {
+                temp = temp.left;
+            }
+            return temp;
+        }
+        else{
+            while(temp!=this.root){
+                if(temp.parent.left==temp){
+                    //we found the succsessor
+                    return temp.parent;
+                }
+                else{
+                    temp=temp.parent;
+                }
+            }
         }
         return temp;
 
@@ -512,17 +538,12 @@ public class WAVLTree {
      * if the tree is empty
      */
     public String min() {
-        //O(logn)
-        // go till the end on the left branch
+        //O(1)
         if (this.empty()) {
             return null;
 
         }
-        WAVLNode temp = this.root;
-        while (temp.left.isReal) {
-            temp = temp.left;
-        }
-        return temp.value;
+     return this.minimum.value;
     }
 
     /**
@@ -642,22 +663,47 @@ public class WAVLTree {
      * precondition: size() >= i > 0 postcondition: none
      */
     public String select(int i) {
-        WAVLNode tmpRoot = this.root;
-        while (tmpRoot.isReal) {
-            int numOfElementsBefore = tmpRoot.getLeft().getSubtreeSize() + 1;
-            if (numOfElementsBefore == i) { //we need this element
-                return tmpRoot.getValue();
-            } else if (numOfElementsBefore > i) { //its in the left
-                tmpRoot = tmpRoot.left;
-            } else if (numOfElementsBefore < i) {
-                i = i - numOfElementsBefore;
-                tmpRoot = tmpRoot.right;
-            }
-        }
-        return null;
-
-
+    	//o(log i)
+    	if(this.empty()){
+    		return null;
+    	}
+    	return selectNode(i).getValue();
     }
+
+	/**
+	 * @param i
+	 */
+	private IWAVLNode selectNode(int i) {
+		WAVLNode tmpRoot = this.minimum;
+		if (i == 1){
+			return tmpRoot;
+		}
+    	boolean goingUp = true;
+		while (goingUp){
+    		int numOfElementsBefore = tmpRoot.parent.getSubtreeSize();
+    		if (numOfElementsBefore < i){ 
+    			tmpRoot = tmpRoot.parent;
+    		}
+    		else if(numOfElementsBefore >= i){
+    			tmpRoot=tmpRoot.parent;
+    			goingUp = false;
+    		}
+    	}
+		while (true){
+    		int numOfElementsBefore = tmpRoot.getLeft().getSubtreeSize() + 1;
+    		if (numOfElementsBefore == i){ //we need this element
+    			return tmpRoot;
+    		}
+    		else if(numOfElementsBefore > i){ //its in the left 
+    			tmpRoot = tmpRoot.left;
+    		}
+    		else if (numOfElementsBefore < i) {
+    			i = i - numOfElementsBefore;
+    			tmpRoot = tmpRoot.right;
+    		}
+		}
+	}
+   
 
     /**
      * public interface IWAVLNode ! Do not delete or modify this - otherwise all
